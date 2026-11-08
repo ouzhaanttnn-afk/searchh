@@ -1,6 +1,7 @@
 # TETİK (Global adı: *Trigger Point*): özgün oyun fikri
 
 > Tarih: 8 Kasım 2026 · Durum: fikir ve araştırma aşaması. Kod yok.
+> Antigravity'ye verilecek tam prompt (gelir modeli, finansman ve görsel üretim iş akışı dahil): `ANTIGRAVITY_PROMPT_TETIK.md`
 
 ## 1. Tek cümlede
 

@@ -179,6 +179,24 @@ Kapılar: D1 < %30 ise ilk 10 bölüm yeniden tasarlanır; reklam maruziyeti koh
 
 **H. Rakipler (App Store taraması).** Rescue Brick (dokununca blok kaldır, çok hamleli), Chain Bump! (nesne konumlandırarak topu kaba düşür), Tumball (dokunuş nesneyi döndürür, gerçek zamanlı), Brain It On! (çizim tabanlı). "Donmuş düzenek + tek tetik + benzersiz çözüm + günlük ortak bölüm" birleşimi bulunamadı; bu kesin boşluk kanıtı değil, yumuşak çıkışta doğrulanacak. [Rescue Brick](https://apps.apple.com/us/app/-/id6744133146), [Chain Bump!](https://apps.apple.com/us/app/id1246691071).
 
----
+## 13. Alınmış kararlar (sorma, uygula)
 
-Şimdi önce bana şunları sor, sonra M0'a başla: (1) Reklam mediasyonu MAX mı AdMob mu? (2) Mağaza geliştirici hesabı hazır mı? (3) Kürasyon aracında Claude API kullanılsın mı? (4) Apple Small Business Program kaydı yapıldı mı?
+1. **Reklam:** Google AdMob, `@capacitor-community/admob` eklentisiyle. Tek SDK. MAX yok.
+2. **Mağaza:** Apple geliştirici hesabı mevcut; iOS önce, TestFlight üzerinden. Android v1.1.
+3. **Kürasyon aracında Claude API:** Var ama isteğe bağlı; anahtar yalnızca `.env`'de, ayarlardan kapatılabilir. Varsayılan kapalı.
+4. **Apple Small Business Program ve Google Play %15 katmanı:** Geliştirici kaydolacak; fiyatlandırma %15 komisyona göre.
+5. **Render:** PixiJS değil, düz Canvas 2D. Prototipte yeterli ve bağımlılık azaltıyor.
+6. **Analitik:** Firebase Analytics değil, PostHog ücretsiz katman (ATT gerektirmez, self-host seçeneği var).
+7. **Yumuşak çıkış pazarları:** Kanada, Yeni Zelanda, İrlanda. 4 hafta.
+8. **Oyun kodlamaya başlamadan önce** §10'daki Shorts testi yapılacak; test geçmezse proje durur.
+
+## 14. Prototipten öğrenilenler (M0 denemesi, 8 Kasım 2026)
+
+Bu belgeyi yazarken çekirdek bir kez prototiplendi (TypeScript + Matter.js, 2 bölüm, çözücü). Şu bulgular doğrulandı ve uygulamada zorunlu:
+
+- **Deterministik sim çalışıyor:** sabit 1/120 sn adım, `enableSleeping=false`, seed'li PRNG. Çözücü 20/20 sağlamlık testini geçti.
+- **Top eğimde kaymıyor:** Matter.js'te top hafif eğimde (<0.2 rad) sürtünme yüzünden duruyor. Çözüm: top `friction=0.05`, `frictionStatic=0`, rampalar ≥0.24 rad.
+- **Tutucu parçalar statik olmalı:** Dinamik bir "kapı" topla birlikte kayıyor ve bölüm kendiliğinden çözülüyor. ÇEK parçaları (peg) statik; dinamik parçalar yalnızca İT için.
+- **Huni şart:** Hedef kabın üstüne iki açılı kılavuz koyulunca bölümler sapmaya karşı dayanıklı oluyor; "exactly one solution" testi ancak böyle tutarlı geçiyor.
+- **Parça yerleşimi için yardımcılar gerekli:** `surfaceY`, `onShelf`, `ballOn` gibi fonksiyonlar olmadan elle koordinat vermek hatalı (havada kalan parça) oluyor.
+- **Çözücü süresi:** bölüm başına ~0,2-0,5 sn (Node). 10.000 aday üretimi dakikalar mertebesinde; pratik.

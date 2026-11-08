@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#14161B" />
+    <title>Trigger Point</title>
+    <style>
+      :root {
+        --bg: #14161b;
+        --panel: #1e2129;
+        --text: #e9ebf0;
+        --muted: #8b93a5;
+        --accent: #ffb347;
+        --ok: #7bd389;
+        --bad: #e26d7c;
+      }
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: Inter, -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+      #stage { position: fixed; inset: 0; display: grid; place-items: center; }
+      canvas { display: block; }
+      .hud { position: fixed; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: max(12px, env(safe-area-inset-top)) 16px 0; pointer-events: none; }
+      .hud > * { pointer-events: auto; }
+      .pill { background: rgba(30,33,41,0.85); border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; padding: 8px 14px; font-size: 14px; font-weight: 600; letter-spacing: 0.01em; backdrop-filter: blur(8px); }
+      .icon-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); background: rgba(30,33,41,0.85); color: var(--text); display: grid; place-items: center; font-size: 16px; cursor: pointer; }
+      .prompt { position: fixed; left: 0; right: 0; bottom: max(26px, env(safe-area-inset-bottom)); text-align: center; color: var(--muted); font-size: 15px; font-weight: 500; letter-spacing: 0.02em; pointer-events: none; transition: opacity .3s; }
+      .prompt b { color: var(--accent); }
+      .overlay { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(20,22,27,0.72); backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity .25s; }
+      .overlay.show { opacity: 1; pointer-events: auto; }
+      .card { width: min(92vw, 380px); background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 26px 22px 20px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.5); transform: translateY(8px); transition: transform .25s; }
+      .overlay.show .card { transform: none; }
+      .card h2 { margin: 0 0 6px; font-size: 26px; letter-spacing: -0.01em; }
+      .card p { margin: 0 0 18px; color: var(--muted); font-size: 15px; line-height: 1.4; }
+      .stars { font-size: 30px; letter-spacing: 6px; margin-bottom: 8px; color: var(--accent); }
+      .stat { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+      .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+      .btn { border: 0; border-radius: 12px; padding: 13px 18px; font-size: 15px; font-weight: 700; cursor: pointer; background: rgba(255,255,255,0.08); color: var(--text); min-width: 110px; }
+      .btn.primary { background: var(--accent); color: #1a1408; }
+      .btn:active { transform: scale(0.97); }
+      .hidden { display: none !important; }
+      .levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 6px 0 18px; }
+      .lvl { aspect-ratio: 1; border-radius: 12px; background: rgba(255,255,255,0.06); display: grid; place-items: center; font-weight: 700; font-size: 16px; cursor: pointer; border: 1px solid transparent; position: relative; }
+      .lvl.done { border-color: rgba(255,179,71,0.5); }
+      .lvl.star::after { content: "★"; position: absolute; top: 2px; right: 6px; font-size: 10px; color: var(--accent); }
+      .lvl.locked { opacity: 0.35; cursor: default; }
+      .toast { position: fixed; left: 50%; top: 14%; transform: translateX(-50%); background: var(--panel); border: 1px solid rgba(255,255,255,0.1); padding: 10px 16px; border-radius: 12px; font-size: 14px; opacity: 0; transition: opacity .25s; pointer-events: none; }
+      .toast.show { opacity: 1; }
+      @media (prefers-reduced-motion: reduce) { .overlay, .card, .prompt, .toast { transition: none; } }
+    </style>
+  </head>
+  <body>
+    <div id="stage"><canvas id="c"></canvas></div>
+
+    <div class="hud">
+      <button class="icon-btn" id="btnLevels" aria-label="Levels">☰</button>
+      <div class="pill" id="levelLabel">1 · First Spark</div>
+      <button class="icon-btn" id="btnMute" aria-label="Sound">♪</button>
+    </div>
+
+    <div class="prompt" id="prompt">Only <b>one</b> tap. Which piece?</div>
+
+    <div class="overlay" id="resultOverlay">
+      <div class="card">
+        <div class="stars" id="stars">★</div>
+        <h2 id="resultTitle">Solved</h2>
+        <p id="resultText"></p>
+        <div class="stat" id="resultStat"></div>
+        <div class="row">
+          <button class="btn" id="btnRewind">Rewind</button>
+          <button class="btn" id="btnShare">Share</button>
+          <button class="btn primary" id="btnNext">Next</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="levelsOverlay">
+      <div class="card">
+        <h2>Trigger Point</h2>
+        <p>World 1 · Wood</p>
+        <div class="levels" id="levelGrid"></div>
+        <div class="row">
+          <button class="btn" id="btnCloseLevels">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
